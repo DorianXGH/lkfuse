@@ -325,6 +325,7 @@ int lkfs_chown (const char * path, uid_t uid, gid_t gid, struct fuse_file_info *
     struct DESCRIPTOR * desc = get_descriptor_from_block(blk);
     desc->GID = (gid != -1) ? gid : desc->GID;
     desc->UID = (uid != -1) ? uid : desc->UID;
+    set_block(blk,desc);
   } else
   {
     return -EPERM;
