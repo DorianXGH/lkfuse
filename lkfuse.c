@@ -77,6 +77,17 @@ void set_block(uint64_t block, void* data)
   fwrite(data,blocksize*sizeof(uint8_t),1,devfile);
 }
 
+uint64_t get_numfree_blocks()
+{
+  uint64_t cnt = 0;
+  for(uint64_t i = 0; i < fssize/blocksize; i++)
+  {
+    if(get_block_link(i) == -1)
+      cnt++;
+  }
+  return cnt;
+}
+
 bool is_descriptor_name_eq(struct DESCRIPTOR * desc, char * dir)
 {
   return strcmp(desc->NAME,dir) == 0;
@@ -354,13 +365,32 @@ int lkfs_chmod (const char * path, mode_t mode, struct fuse_file_info *fi)
   return 0;
 }
 
+int lkfs_statfs (const char * path, struct statvfs * fs)
+{
+  uint64_t b = get_block_from_path(path);
+  if((int64_t)b < 0)
+    return b;
+  fs->f_bsize = blocksize;
+  fs->f_frsize = blocksize;
+  fs->f_blocks = fssize/blocksize;
+  fs->f_bfree = get_numfree_blocks();
+  fs->f_bavail = fs->f_bfree;
+  fs->f_files = -1;
+  fs->f_favail = fs->f_bfree;
+  fs->f_ffree = fs->f_bfree;
+  fs->f_fsid = sprblk.GUID[0];
+  fs->f_flag = ST_NOSUID;
+  fs->f_namemax = blocksize-sizeof(struct DESCRIPTOR)-1;
+  return 0;
+}
 
 static struct fuse_operations myfs_ops = {
   .getattr = lkfs_getattr,
   .readdir = lkfs_readdir,
   .mkdir = lkfs_mkdir,
   .chown = lkfs_chown,
-  .chmod = lkfs_chmod
+  .chmod = lkfs_chmod,
+  .statfs = lkfs_statfs
 };
  
 int main(int argc, char **argv)
