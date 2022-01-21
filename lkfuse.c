@@ -271,7 +271,7 @@ int lkfs_mkdir(const char *path, mode_t mode)
   struct DESCRIPTOR * desc = get_descriptor_from_block(blk);
   if(desc->TYPE != TYPE_DIR)
     return -ENOTDIR;
-  if(!user_has_right(desc,__S_IWRITE,getuid(),getgid()))
+  if(!user_has_right(desc,__S_IWRITE>>6,getuid(),getgid()))
     return -EACCES;
   
   printf("Creating directory\n");
