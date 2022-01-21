@@ -315,10 +315,28 @@ int lkfs_mkdir(const char *path, mode_t mode)
   return -ENOSPC;
 }
 
+int lkfs_chown (const char * path, uid_t uid, gid_t gid, struct fuse_file_info *fi)
+{
+  uint64_t blk = get_block_from_path(path);
+  if((int64_t)blk < 0)
+    return blk;
+  if(blk != 0)
+  {
+    struct DESCRIPTOR * desc = get_descriptor_from_block(blk);
+    desc->GID = (gid != -1) ? gid : desc->GID;
+    desc->UID = (uid != -1) ? uid : desc->UID;
+  } else
+  {
+    return -EPERM;
+  }
+  return 0;
+}
+
 static struct fuse_operations myfs_ops = {
   .getattr = lkfs_getattr,
   .readdir = lkfs_readdir,
-  .mkdir = lkfs_mkdir
+  .mkdir = lkfs_mkdir,
+  .chown = lkfs_chown
 };
  
 int main(int argc, char **argv)
