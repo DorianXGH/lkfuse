@@ -335,11 +335,32 @@ int lkfs_chown (const char * path, uid_t uid, gid_t gid, struct fuse_file_info *
   return 0;
 }
 
+int lkfs_chmod (const char * path, mode_t mode, struct fuse_file_info *fi)
+{
+  uint64_t blk = get_block_from_path(path);
+  if((int64_t)blk < 0)
+    return blk;
+  if(blk != 0)
+  {
+    struct DESCRIPTOR * desc = get_descriptor_from_block(blk);
+    desc->PERMS[0] = (mode & 0700)>>6;
+    desc->PERMS[1] = (mode & 0070)>>3;
+    desc->PERMS[2] = (mode & 0007);
+    set_block(blk,desc);
+  } else
+  {
+    return -EPERM;
+  }
+  return 0;
+}
+
+
 static struct fuse_operations myfs_ops = {
   .getattr = lkfs_getattr,
   .readdir = lkfs_readdir,
   .mkdir = lkfs_mkdir,
-  .chown = lkfs_chown
+  .chown = lkfs_chown,
+  .chmod = lkfs_chmod
 };
  
 int main(int argc, char **argv)
