@@ -1,3 +1,4 @@
 *.o
 lkfuse
 lkfs
+fsfile.bin
